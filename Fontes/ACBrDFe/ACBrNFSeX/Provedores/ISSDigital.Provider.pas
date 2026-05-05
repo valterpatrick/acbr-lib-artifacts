@@ -85,6 +85,7 @@ type
   public
     function GerarNFSe(const ACabecalho, AMSG: string): string; override;
     function ConsultarSituacao(const ACabecalho, AMSG: String): string; override;
+    function ConsultarLote(const ACabecalho, AMSG: String): string; override;
     function EnviarEvento(const ACabecalho, AMSG: string): string; override;
     function ConsultarNFSePorRps(const ACabecalho, AMSG: string): string; override;
     function ConsultarNFSePorChave(const ACabecalho, AMSG: string): string; override;
@@ -121,6 +122,9 @@ type
 
     procedure PrepararConsultaSituacao(Response: TNFSeConsultaSituacaoResponse); override;
     procedure TratarRetornoConsultaSituacao(Response: TNFSeConsultaSituacaoResponse); override;
+
+    procedure PrepararConsultaLoteRps(Response: TNFSeConsultaLoteRpsResponse); override;
+    procedure TratarRetornoConsultaLoteRps(Response: TNFSeConsultaLoteRpsResponse); override;
   public
 
   end;
@@ -131,6 +135,7 @@ uses
   ACBrDFe.Conversao,
   ACBrUtil.Strings,
   ACBrUtil.XMLHTML,
+  ACBrUtil.Base,
   ACBrDFeException,
   ACBrNFSeX,
   ACBrNFSeXConsts,
@@ -425,20 +430,41 @@ function TACBrNFSeXWebserviceISSDigitalAPIPropria.ConsultarSituacao(
 var
   Request: string;
 begin
+  FPMsgOrig := AMSG;
+
+  Request := RemoverDeclaracaoXML(AMSG);
+
   Request := '<ws:ConsultarStatusDps>' +
                '<xml>' +
-                  IncluirCDATA(Request) +
+                  XmlToStr(Request) +
                '</xml>' +
              '</ws:ConsultarStatusDps>';
 
-  Result := Executar('', Request, ['return', 'retornoNFSe'],
+  Result := Executar('', Request, ['return', 'retornoRTC'],
+    ['xmlns:ws="http://ws.supernova.com.br/"']);
+end;
+
+function TACBrNFSeXWebserviceISSDigitalAPIPropria.ConsultarLote(
+  const ACabecalho, AMSG: String): string;
+var
+  Request: string;
+begin
+  FPMsgOrig := AMSG;
+
+  Request := RemoverDeclaracaoXML(AMSG);
+
+  Request := '<ws:ConsultarDps>' +
+               '<xml>' +
+                  XmlToStr(Request) +
+               '</xml>' +
+             '</ws:ConsultarDps>';
+
+  Result := Executar('', Request, ['return', 'retornoRTC'],
     ['xmlns:ws="http://ws.supernova.com.br/"']);
 end;
 
 function TACBrNFSeXWebserviceISSDigitalAPIPropria.EnviarEvento(const ACabecalho,
   AMSG: string): string;
-var
-  Request: string;
 begin
   FPMsgOrig := AMSG;
 
@@ -506,7 +532,7 @@ begin
   with ConfigGeral do
   begin
     Layout := loPadraoNacional;
-    Identificador := 'id';
+    Identificador := 'Id';
     QuebradeLinha := '|';
     ConsultaLote := False;
     FormatoArqEnvio := tfaXml;
@@ -516,6 +542,7 @@ begin
 
     ServicosDisponibilizados.EnviarUnitario := True;
     ServicosDisponibilizados.ConsultarSituacao := True;
+    ServicosDisponibilizados.ConsultarLote := True;
     ServicosDisponibilizados.ConsultarNfseChave := True;
     ServicosDisponibilizados.ConsultarRps := True;
     ServicosDisponibilizados.EnviarEvento := True;
@@ -546,18 +573,26 @@ begin
     XmlRps.InfElemento := 'infDPS';
     XmlRps.DocElemento := 'DPS';
 
-    EnviarEvento.InfElemento := 'infEvento';
-    EnviarEvento.DocElemento := 'evento';
+    EnviarEvento.InfElemento := 'infPedReg';
+    EnviarEvento.DocElemento := 'pedRegEvento';
+
+    ConsultarSituacao.InfElemento := 'ConsultarStatusDps';
+    ConsultarSituacao.DocElemento := 'ConsultarStatusDps';
+
+    ConsultarLote.InfElemento := 'ConsultarDps';
+    ConsultarLote.DocElemento := 'ConsultarDps';
   end;
 
   with ConfigAssinar do
   begin
     RpsGerarNFSe := True;
     EnviarEvento := True;
+    ConsultarSituacao := True;
+    ConsultarLote := True;
   end;
 
-  SetNomeXSD('SchemaDPS.xsd');
-  {
+  SetNomeXSD('***');
+
   with ConfigSchemas do
   begin
     GerarNFSe := 'DPS_v' + VersaoDFe + '.xsd';
@@ -565,11 +600,7 @@ begin
     ConsultarNFSeRps := 'DPS_v' + VersaoDFe + '.xsd';
     EnviarEvento := 'pedRegEvento_v' + VersaoDFe + '.xsd';
     ConsultarEvento := 'DPS_v' + VersaoDFe + '.xsd';
-
-    Validar := False;
   end;
-  }
-  ConfigSchemas.Validar := False;
 end;
 
 function TACBrNFSeProviderISSDigitalAPIPropria.CriarGeradorXml(
@@ -593,7 +624,7 @@ var
 begin
   URL := GetWebServiceURL(AMetodo);
 
-  if AMetodo in [tmGerar, tmEnviarEvento, tmConsultarSituacao] then
+  if AMetodo in [tmGerar, tmConsultarLote, tmConsultarSituacao] then
     AMimeType := 'text/xml'
   else
     AMimeType := 'application/json';
@@ -680,6 +711,9 @@ begin
     begin
       Codigo := ObterConteudoTag(ANode.Childrens.FindAnyNs('codigo'), tcStr);
       Mensagem := ObterConteudoTag(ANode.Childrens.FindAnyNs('descricao'), tcStr);
+      if Mensagem = '' then
+
+      Mensagem := ObterConteudoTag(ANode.Childrens.FindAnyNs('detalhe'), tcStr);
 
       ProcessarErro(ANode, Codigo, Mensagem);
     end;
@@ -730,8 +764,32 @@ end;
 function TACBrNFSeProviderISSDigitalAPIPropria.PrepararArquivoEnvio(
   const aXml: string; aMetodo: TMetodo): string;
 begin
+  Result := aXml;
+
   if aMetodo in [tmGerar, tmEnviarEvento] then
+  begin
     Result := ChangeLineBreak(aXml, '');
+
+    case aMetodo of
+      tmGerar:
+        begin
+          Path := '';
+        end;
+
+      tmEnviarEvento:
+        begin
+          Result := '{"pedidoRegistroEventoXmlGZipB64":"' + Result + '"}';
+          Path := '/nfse/' + Chave + '/eventos';
+        end;
+    else
+      begin
+        Result := '';
+        Path := '';
+      end;
+    end;
+
+    Method := 'POST';
+  end;
 end;
 
 procedure TACBrNFSeProviderISSDigitalAPIPropria.PrepararEmitir(
@@ -802,9 +860,10 @@ procedure TACBrNFSeProviderISSDigitalAPIPropria.TratarRetornoEmitir(
 var
   Document: TACBrXmlDocument;
   AErro: TNFSeEventoCollectionItem;
-  ANode,AuxNode: TACBrXmlNode;
+  ANode, AuxNode: TACBrXmlNode;
 begin
   Document := TACBrXmlDocument.Create;
+
   try
     try
       if Response.ArquivoRetorno = '' then
@@ -851,31 +910,37 @@ end;
 procedure TACBrNFSeProviderISSDigitalAPIPropria.PrepararConsultaSituacao(
   Response: TNFSeConsultaSituacaoResponse);
 var
-  aXml: string;
-  Emitente: TEmitenteConfNFSe;
-  ACodMun, ATpAmbiente, ATpIntegracao: string;
+  AErro: TNFSeEventoCollectionItem;
+  CNPJ, IM, IdAttrib: string;
 begin
-  ConfigMsgDados.Prefixo := '';
-  Emitente := TACBrNFSeX(FAOwner).Configuracoes.Geral.Emitente;
-  ACodMun := IntToStr(TACBrNFSeX(FAOwner).Configuracoes.Geral.CodigoMunicipio);
-  ATpAmbiente := '1';
-
-  if TACBrNFSeX(FAOwner).Configuracoes.WebServices.Ambiente = taHomologacao then
-   ATpAmbiente := '2';
-  {
-  case Response.tpEvento of
-    teCancelamento: ATpIntegracao := 'CANCELAMENTO';
-    teCancelamentoSubstituicao: ATpIntegracao := 'CANCELAMENTO_POR_SUBSTICAO';
-  else
-    ATpIntegracao := 'EMISSAO' ;
+  if EstaVazio(Response.Protocolo) then
+  begin
+    AErro := Response.Erros.New;
+    AErro.Codigo := Cod101;
+    AErro.Descricao := ACBrStr(Desc101);
+    Exit;
   end;
-  }
+
+  if EstaVazio(Response.NumeroLote) then
+  begin
+    AErro := Response.Erros.New;
+    AErro.Codigo := Cod126;
+    AErro.Descricao := ACBrStr(Desc126);
+    Exit;
+  end;
+
+
+  CNPJ := OnlyAlphaNum(TACBrNFSeX(FAOwner).Configuracoes.Geral.Emitente.CNPJ);
+  IM := OnlyAlphaNum(TACBrNFSeX(FAOwner).Configuracoes.Geral.Emitente.InscMun);
+  IdAttrib := Response.NumeroLote;
+
   Response.ArquivoEnvio :=
-         '<dps:tpAmb>' + ATpAmbiente + '</dps:tpAmb>' +
-         '<dps:codigoIbge>' + ACodMun + '</dps:codigoIbge>' +
-         '<dps:cpfCnpjPrestador>' + Emitente.CNPJ + '</dps:cpfCnpjPrestador>' +
-         '<dps:protocolo>' + Response.Protocolo + '</dps:protocolo>' +
-         '<dps:tipoIntegracao>' + ATpIntegracao + '</dps:tipoIntegracao>';
+         '<ConsultarStatusDps xmlns="http://www.sped.fazenda.gov.br/nfse" Id="' + IdAttrib + '">' +
+           '<CNPJ>' + CNPJ + '</CNPJ>' +
+           '<IM>' + IM + '</IM>' +
+           '<Protocolo>' + Response.Protocolo + '</Protocolo>' +
+         '</ConsultarStatusDps>';
+
   Path := '';
   Method := 'POST';
 end;
@@ -885,9 +950,10 @@ procedure TACBrNFSeProviderISSDigitalAPIPropria.TratarRetornoConsultaSituacao(
 var
   Document: TACBrXmlDocument;
   AErro: TNFSeEventoCollectionItem;
-  ANode,AuxNode: TACBrXmlNode;
+  ANode, AuxNode: TACBrXmlNode;
 begin
   Document := TACBrXmlDocument.Create;
+
   try
     try
       if Response.ArquivoRetorno = '' then
@@ -902,46 +968,93 @@ begin
 
       ANode := Document.Root;
 
-      if (ANode.Name <> 'ConsultarStatusDpsResposta') and
-         (ANode.Name <> 'ConsultarStatusDpsEmissaoResposta') then
-      begin
-        ANode := ANode.Childrens.FindAnyNs('ConsultarStatusDpsEmissaoResposta');
-        if ANode = nil then
-          ANode := Document.Root.Childrens.FindAnyNs('ConsultarStatusDpsResposta');
-      end;
+      ProcessarMensagemErros(ANode, Response, 'infRetorno');
 
-      if ANode = nil then
+      AuxNode := ANode.Childrens.FindAnyNs('infRetorno');
+
+      if Assigned(AuxNode) then
+        Response.Situacao := ObterConteudoTag(AuxNode.Childrens.FindAnyNs('status'), tcStr);
+
+      Response.Sucesso := (Response.Erros.Count = 0);
+    except
+      on E: Exception do
       begin
         AErro := Response.Erros.New;
         AErro.Codigo := Cod999;
-        AErro.Descricao := 'Resposta DPS fora do padrão esperado';
+        AErro.Descricao := ACBrStr(Desc999 + E.Message);
+      end;
+    end;
+  finally
+    FreeAndNil(Document);
+  end;
+end;
+
+procedure TACBrNFSeProviderISSDigitalAPIPropria.PrepararConsultaLoteRps(
+  Response: TNFSeConsultaLoteRpsResponse);
+var
+  AErro: TNFSeEventoCollectionItem;
+  CNPJ, IM, IdAttrib: string;
+begin
+  if EstaVazio(Response.Protocolo) then
+  begin
+    AErro := Response.Erros.New;
+    AErro.Codigo := Cod101;
+    AErro.Descricao := ACBrStr(Desc101);
+    Exit;
+  end;
+
+  if EstaVazio(Response.NumeroLote) then
+  begin
+    AErro := Response.Erros.New;
+    AErro.Codigo := Cod126;
+    AErro.Descricao := ACBrStr(Desc126);
+    Exit;
+  end;
+
+  CNPJ := OnlyAlphaNum(TACBrNFSeX(FAOwner).Configuracoes.Geral.Emitente.CNPJ);
+  IM := OnlyAlphaNum(TACBrNFSeX(FAOwner).Configuracoes.Geral.Emitente.InscMun);
+  IdAttrib := Response.NumeroLote;
+
+  Response.ArquivoEnvio :=
+         '<ConsultarDps xmlns="http://www.sped.fazenda.gov.br/nfse" Id="' + IdAttrib + '">' +
+           '<CNPJ>' + CNPJ + '</CNPJ>' +
+           '<IM>' + IM + '</IM>' +
+           '<Protocolo>' + Response.Protocolo + '</Protocolo>' +
+         '</ConsultarDps>';
+
+  Path := '';
+  Method := 'POST';
+end;
+
+procedure TACBrNFSeProviderISSDigitalAPIPropria.TratarRetornoConsultaLoteRps(
+  Response: TNFSeConsultaLoteRpsResponse);
+var
+  Document: TACBrXmlDocument;
+  AErro: TNFSeEventoCollectionItem;
+  ANode, AuxNode: TACBrXmlNode;
+begin
+  Document := TACBrXmlDocument.Create;
+
+  try
+    try
+      if Response.ArquivoRetorno = '' then
+      begin
+        AErro := Response.Erros.New;
+        AErro.Codigo := Cod201;
+        AErro.Descricao := ACBrStr(Desc201);
         Exit;
       end;
 
-      ProcessarMensagemErros(ANode, Response);
+      Document.LoadFromXml(Response.ArquivoRetorno);
 
-      Response.Protocolo :=
-        ObterConteudoTag(ANode.Childrens.FindAnyNs('protocolo'), tcStr);
+      ANode := Document.Root;
 
-      Response.NumeroLote :=
-        ObterConteudoTag(ANode.Childrens.FindAnyNs('idDps'), tcStr);
+      ProcessarMensagemErros(ANode, Response, 'infRetorno');
 
-      Response.Situacao :=
-        ObterConteudoTag(ANode.Childrens.FindAnyNs('statusProcessamento'), tcStr);
+      AuxNode := ANode.Childrens.FindAnyNs('infRetorno');
 
-      Response.Data :=
-        ObterConteudoTag(ANode.Childrens.FindAnyNs('dataHoraRecebimento'), tcDatHor);
-
-      AuxNode := ANode.Childrens.FindAnyNs('emissao');
       if Assigned(AuxNode) then
-      begin
-        Response.idRps := ObterConteudoTag(AuxNode.Childrens.FindAnyNs('idDps'), tcStr);
-        Response.idNota := ObterConteudoTag(AuxNode.Childrens.FindAnyNs('chaveAcesso'), tcStr);
-        Response.NumeroRps := ObterConteudoTag(AuxNode.Childrens.FindAnyNs('numeroDps'), tcStr);
-        Response.SerieRps := ObterConteudoTag(AuxNode.Childrens.FindAnyNs('serieDps'), tcStr);
-        Response.NumeroNota := ObterConteudoTag(AuxNode.Childrens.FindAnyNs('numeroNotaFiscal'), tcStr);
-        Response.Link := ObterConteudoTag(AuxNode.Childrens.FindAnyNs('linkPdf'), tcStr);
-      end;
+        Response.Situacao := ObterConteudoTag(AuxNode.Childrens.FindAnyNs('status'), tcStr);
 
       Response.Sucesso := (Response.Erros.Count = 0);
     except

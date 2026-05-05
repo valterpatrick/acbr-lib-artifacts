@@ -52,7 +52,7 @@ type
   private
     LSecao: string;
   protected
-    procedure LerCondicaoPagamento(const ANode: TACBrXmlNode);
+    procedure LerCondicaoPagamento(const ANode: TACBrXmlNode); override;
 
     procedure LerINISecaoCondicaoPagamento(const AINIRec: TMemIniFile); override;
     procedure LerINISecaoParcelas(const AINIRec: TMemIniFile); override;
@@ -181,10 +181,6 @@ end;
 
 procedure TNFSeR_BethaAPIPropria.LerXMLIBSCBSDPS(const ANode: TACBrXmlNode;
   IBSCBS: TIBSCBSDPS);
-var
-  ANodeAux: TACBrXmlNode;
-  ANodes: TACBrXmlNodeArray;
-  i: Integer;
 begin
   if not Assigned(ANode) then Exit;
 

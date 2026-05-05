@@ -48,10 +48,13 @@ uses
    System.Contnrs,
   {$IfEnd}
   ACBrDFe.Conversao,
+  ACBrNFe.Conversao,
   pcnConversao,
   pcnConversaoNFe,
-  pcnSignature,
-//  ACBrDFeComum.SignatureClass,
+  ACBrXmlBase,
+  {$IFNDEF USE_ACBr_XMLDOCUMENT}
+   pcnSignature,
+  {$ENDIF}
   pcnProcNFe,
   ACBrBase;
 

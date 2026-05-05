@@ -1164,6 +1164,8 @@ end;
 function TACBrNFSeProviderBethaAPIPropria.PrepararArquivoEnvio(
   const aXml: string; aMetodo: TMetodo): string;
 begin
+  Result := aXml;
+
   if aMetodo in [tmGerar, tmEnviarEvento] then
     Result := ChangeLineBreak(aXml, '');
 end;
@@ -1285,7 +1287,6 @@ end;
 procedure TACBrNFSeProviderBethaAPIPropria.PrepararConsultaSituacao(
   Response: TNFSeConsultaSituacaoResponse);
 var
-  aXml: string;
   Emitente: TEmitenteConfNFSe;
   ACodMun, ATpAmbiente, ATpIntegracao: string;
 begin

@@ -54,21 +54,23 @@ type
     function DeveGerarIBSCBS: Boolean;
   protected
     procedure Configuracao; override;
-    function GerarXml: Boolean; override;
+
     function GerarInfRps: TACBrXmlNode; override;
     function GerarTomador: TACBrXmlNode; override;
     function GerarValores: TACBrXmlNode; override;
     function GerarServico: TACBrXmlNode; override;
     function GerarDadosDPS: TACBrXmlNode;
-    function GerarDestinatario: TACBrXmlNode;
+    function GerarDestinatario: TACBrXmlNode;override;
     function GerarControleIBSCBS: TACBRXmlNode;
     function GerarIBSCBS: TACBrXmlNode;
 
     //======Arquivo INI===========================================
     procedure GerarINISecaoIdentificacaoNFSe(const AINIRec: TMemIniFile); override;
+    procedure GerarINISecaoValores(const AINIRec: TMemIniFile); override;
     procedure GerarINIIBSCBSValores(AINIRec: TMemIniFile; Valores: Tvalorestrib); override;
   public
-    function GerarIni: string; override;
+    function GerarXml: Boolean; override;
+//    function GerarIni: string; override;
   end;
 
 implementation
@@ -90,7 +92,7 @@ procedure TNFSeW_SpeedGov.Configuracao;
 begin
   inherited Configuracao;
 
-//  PrefixoPadrao := 'p1';
+  FormatoItemListaServico := filsNaoSeAplica;
 end;
 
 function TNFSeW_SpeedGov.DeveGerarControleIBSCBS: Boolean;
@@ -169,7 +171,7 @@ begin
                                              NFSe.Servico.CodigoMunicipio, ''));
 
   Result.AppendChild(AddNode(tcStr, '#38', 'CTribNac', 6, 6, 1,
-                                            NFSe.Servico.ItemListaServico, ''));
+                                            NFSe.Servico.CodigoServicoNacional, ''));
 
   Result.AppendChild(AddNode(tcStr, '#38', 'TribIssqn', 1, 1, 1,
                    tribISSQNToStr(NFSe.Servico.Valores.tribMun.tribISSQN), ''));
@@ -180,8 +182,8 @@ begin
   Result.AppendChild(AddNode(tcStr, '#38', 'OpSimpNac', 1, 1, 1,
                                   OptanteSNToStr(NFSe.OptanteSN), DSC_INDOPSN));
 
-  Result.AppendChild(AddNode(tcStr, '#38', 'RegEspTrib', 1, 1, 1,
-      FpAOwner.RegimeEspecialTributacaoToStr(NFSe.RegimeEspecialTributacao), DSC_REGISSQN));
+//  Result.AppendChild(AddNode(tcStr, '#38', 'RegEspTrib', 1, 1, 1,
+//    FpAOwner.RegimeEspecialTributacaoToStr(NFSe.RegimeEspecialTributacao), DSC_REGISSQN));
 
   if NFSe.OptanteSN = osnOptanteMEEPP then
     Result.AppendChild(AddNode(tcStr, '#38', 'RegApTribSN', 1, 1, 1,
@@ -252,9 +254,6 @@ begin
 end;
 
 function TNFSeW_SpeedGov.GerarIBSCBS: TACBrXmlNode;
-var
-  item: string;
-  Valores: TACBrXmlNode;
 begin
   Result := CreateElement('IBSCBS');
 
@@ -326,7 +325,7 @@ begin
     Result.AppendChild(AddNode(tcDat, '#30', 'DataCompetencia', 1, 10, 0,
                                    NFSe.Competencia, ''));
 end;
-
+(*
 function TNFSeW_SpeedGov.GerarIni: string;
 var
   LINIRec: TMemIniFile;
@@ -364,7 +363,7 @@ begin
     end;
   end;
 end;
-
+*)
 procedure TNFSeW_SpeedGov.GerarINIIBSCBSValores(AINIRec: TMemIniFile;
   Valores: Tvalorestrib);
 var
@@ -396,10 +395,17 @@ begin
   AINIRec.WriteString(lSecao, 'verAplic', NFSe.verAplic);
 end;
 
+procedure TNFSeW_SpeedGov.GerarINISecaoValores(const AINIRec: TMemIniFile);
+var
+  lSecao: String;
+begin
+  inherited GerarINISecaoValores(AINIRec);
+  lSecao := 'Valores';
+  AINIRec.WriteString(lSecao, 'tribISSQN', tribISSQNToStr(NFSe.Servico.Valores.tribMun.tribISSQN));
+end;
+
 function TNFSeW_SpeedGov.GerarServico: TACBrXmlNode;
 var
-  nodeArray: TACBrXmlNodeArray;
-  i: Integer;
   item: string;
 begin
   Result := CreateElement('Servico');
@@ -434,9 +440,6 @@ begin
 end;
 
 function TNFSeW_SpeedGov.GerarTomador: TACBrXmlNode;
-var
-  tomadorIdentificado, tipoPessoa, item, cnpjCpfDestinatario,
-  xCidade, xUF: string;
 begin
   Result := inherited GerarTomador;
 end;
