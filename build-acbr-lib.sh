@@ -98,6 +98,7 @@ CMD_DEPENDENCIES="
     lazbuild --lazarusdir=/usr/lib/lazarus --add-package-link Pacotes/Lazarus/ACBrBoleto/FC/FPDF/ACBr_BoletoFC_FPDF.lpk && \
     lazbuild --lazarusdir=/usr/lib/lazarus --add-package-link Pacotes/Lazarus/ACBrBoleto/FC/Laz/ACBr_BoletoFC_LazReport.lpk && \
     lazbuild --lazarusdir=/usr/lib/lazarus --add-package-link Pacotes/Lazarus/ACBrComum/ACBrComum.lpk && \
+    lazbuild --lazarusdir=/usr/lib/lazarus --add-package-link Pacotes/Lazarus/ACBrLibXML2/ACBrLibXML2.lpk && \
     lazbuild --lazarusdir=/usr/lib/lazarus --add-package-link Pacotes/Lazarus/ACBrDebitoAutomatico/ACBr_DebitoAutomatico.lpk && \
     lazbuild --lazarusdir=/usr/lib/lazarus --add-package-link Pacotes/Lazarus/ACBrDFe/ACBrANe/ACBr_ANe.lpk && \
     lazbuild --lazarusdir=/usr/lib/lazarus --add-package-link Pacotes/Lazarus/ACBrDFe/ACBrBlocoX/ACBr_BlocoX.lpk && \
