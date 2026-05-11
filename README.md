@@ -3,8 +3,6 @@
 ![Build Status](https://github.com/drungrin/acbr-lib-artifacts/actions/workflows/sync-and-build.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-LGPL-blue.svg)
 
-> ⚠️ **AVISO:** A distribuição pública dos binários compilados (.dll/.so) foi descontinuada neste repositório em apoio ao modelo de sustentabilidade do Projeto ACBr oficial. Este repositório permanece ativo como uma **demonstração técnica de DevOps**, focada na automação de builds Lazarus em ambientes Docker.
-
 ---
 
 ## 🚀 Sobre o Projeto
