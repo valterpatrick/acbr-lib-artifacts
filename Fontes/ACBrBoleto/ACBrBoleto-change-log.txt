@@ -48,6 +48,51 @@ Símbolo : Significado
 [+]     : Novo recurso
 [*]     : Recurso modificado/melhorado
 [-]     : Correção de Bug (assim esperamos)
+26/05/2026
+-- ACBrBancoMercantil.pas, ACBrBancoNordeste.pas, ACBrBancoOriginal.pas, ACBrBancoPefisa.pas --
+[*][ACBR-9326] Ajustado para utilizar campo alfa CNPJ
+   Por: Larissa Santos
+
+26/05/2026
+-- ACBrBancoFibra.pas, ACBrBancoHSBC.pas,ACBrBancoIndustrialBrasil.pas,ACBrBancoInter.pas,ACBrBancoItau.pas --
+[*][ACBR-9326] Ajustado para utilizar campo alfa CNPJ
+   Por: Larissa Santos
+
+26/05/2026
+-- ACBrBancoUniprime.pas, ACBrBancoVortx.pas,ACBrBancoVotorantim.pas --
+[*][ACBR-9326] Ajustado para utilizar campo alfa CNPJ
+   Por: Daniel de Morais
+
+26/05/2026
+-- ACBrBancoSofisaItau.pas, ACBrBancoSulcredi.pas, ACBrBancoUnicredES.pas, ACBrBancoUnicredRS.pas, ACBrBancoUnicredSC.pas --
+[*][ACBR-9326] Ajustado para utilizar campo alfa CNPJ
+   Por: Daniel de Morais
+
+26/05/2026
+-- ACBrBancoSicoob.pas, ACBrBancoSicredi.pas, ACBrBancoSisprime.pas, ACBrBancoSofisa.pas, ACBrBancoSofisaSantander.pas --
+[*][ACBR-9326] Ajustado para utilizar campo alfa CNPJ
+   Por: Daniel de Morais
+
+26/05/2026
+-- ACBrBancoPine.pas, ACBrBancoRendimento.pas, ACBrBancoSafra.pas, ACBrBancoSafraBradesco.pas, ACBrBancoSantander.pas, --
+[*][ACBR-9326] Ajustado para utilizar campo alfa CNPJ
+   Por: Daniel de Morais
+
+26/05/2026
+-- ACBrBancoCredisan.pas, ACBrBancoCredisis.pas, ACBrBancoCresol.pas ,ACBrBancoCresolSCRS.pas ,ACBrBancoDaycoval.pas --
+[*][ACBR-9326] Ajustado para utilizar campo alfa CNPJ
+   Por: Daniel de Morais
+   
+26/05/2026
+-- ACBrBancoC6.pas,ACBrBancoCaixa.pas,ACBrBancoCaixaSICOB.pas,ACBrBancoCitiBank.pas,ACBrBancoCora.pas --
+[*][ACBR-9326] Ajustado para utilizar campo alfa CNPJ
+   Por: Daniel de Morais
+
+26/05/2026
+-- ACBrBancoBradescoSICOOB.pas, ACBrBancoBrasilSicoob.pas, ACBrBancoBRB.pas, ACBrBancoBS2.pas, ACBrBancoBTGPactual.pas --
+[*][ACBR-9326] Ajustado para utilizar campo alfa CNPJ
+   Por: Daniel de Morais
+
 25/05/2026
 -- ACBrBancoBanese.pas, ACBrBancoBanestes.pas, ACBrBancoBanrisul.pas, ACBrBancoBic.pas, ACBrBancoBocomBBM.pas --
 [*][ACBR-9326] Ajustado para utilizar campo alfa CNPJ
